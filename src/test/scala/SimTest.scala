@@ -12,18 +12,21 @@ class SimTest extends Simulation {
 
     val headers_10 = Map("Content-Type" -> "application/json")
 
-    var kindredId = -1
+    var kindredId = ""
 
-    val search =
-      exec(http("GET Kindreds")
+    val search = scenario("Get Warriors of a Kindred")
+      .exec(http("GET Kindreds")
         .get("/kindred")
         .check(status.is(200), jsonPath("$[0]['id']").saveAs("kindredId")))
-        .pause(1)
-        .exec(session => {
-          val id = session.get("kindredId").asOption[String]
-          println(id.getOrElse("COULD NOT FIND ID"))
-          session
-        })
+      .pause(1)
+      .exec(session => {
+        val id = session.get("kindredId").asOption[String]
+        println(id.getOrElse("COULD NOT FIND ID"))
+        session
+      })
+      .exec(http("GET Warriors")
+        .get("/warrior/kindred/${kindredId}")
+        .check(status.is(200)))
 
   }
 
