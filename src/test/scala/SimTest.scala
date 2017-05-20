@@ -12,32 +12,23 @@ class SimTest extends Simulation {
 
     val headers_10 = Map("Content-Type" -> "application/json")
 
-    val search = exec(http("GET")
-      .get("/cam/process/SOHBSS-000113"))
-      .pause(1)
-      .exec(http("Post")
-        .post("/cam/process/query-instances")
-        .headers(headers_10)
-        .body(StringBody(
-          """{
-             "query": {
-                    "referrerOrganisationUid": {
-                           "value": "stark",
-                           "operator": "EQ"
-                    }
-             }
-          }"""))
-        .check(jsonPath("$.result.data[0].id").saveAs("myresponse"))).exec(session => {
-      val maybeId = session.get("myresponse").asOption[String]
-      println(maybeId.getOrElse("COULD NOT FIND ID"))
-      session
-    })
+    var kindredId = -1
+
+    val search =
+      exec(http("GET Kindreds")
+        .get("/kindred")
+        .check(status.is(200), jsonPath("$[0]['id']").saveAs("kindredId")))
+        .pause(1)
+        .exec(session => {
+          val id = session.get("kindredId").asOption[String]
+          println(id.getOrElse("COULD NOT FIND ID"))
+          session
+        })
 
   }
 
-
   val httpConf = http
-    .baseURL("http://localhost:8280")
+    .baseURL("http://localhost:8080/Darklands_Host_Builder")
     .acceptHeader("application/json,application/xml;q=0.9,*/*;q=0.8")
     .doNotTrackHeader("1")
     .acceptLanguageHeader("en-US,en;q=0.5")
@@ -46,6 +37,6 @@ class SimTest extends Simulation {
 
   val scn = scenario("Query Processes").exec(QueryProcess.search)
 
-  setUp(scn.inject(atOnceUsers(1)).protocols(httpConf))
+  setUp(scn.inject(atOnceUsers(5)).protocols(httpConf))
 
 }
